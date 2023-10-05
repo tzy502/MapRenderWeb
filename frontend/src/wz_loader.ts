@@ -5,6 +5,10 @@ export interface MapInfo
 	backs: Array<MapBack>
 	mapPortals: Array<MapPortal>
 	mapReactors: Array<MapReactor>
+	minX: number
+	minY: number
+	maxX: number
+	maxY: number
 }
 
 export interface MapLayer
