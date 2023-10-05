@@ -312,8 +312,8 @@ if (mapDiv) {
 
 // create viewport
 const viewport = new Viewport({
-    screenWidth: window.innerWidth,
-    screenHeight: window.innerHeight,
+    screenWidth: 1150,
+    screenHeight: 768,
     worldWidth: null,
     worldHeight: null,
 
@@ -353,6 +353,45 @@ const log = console.log.bind(console)
 /**
  * render functions
  */
+
+
+function getCurrentMapPosition() {
+    // const screenPosition = new PIXI.Point(app.renderer.width / 2, app.renderer.height / 2);
+    // const worldPosition = viewport.toWorld(screenPosition);
+    // console.log('Current Map Position:', worldPosition.x, worldPosition.y);
+    console.log('world height width: ', viewport.worldHeight, viewport.worldWidth)
+    console.log('viewport x y: ', viewport.x, viewport.y)
+    console.log('viewort left top: ', viewport.left, viewport.top)
+}
+
+// console 中 window.getPosition()
+(window as any).getPosition = getCurrentMapPosition
+
+getCurrentMapPosition()
+
+function viewportSetup(mapInfo: WZ.MapInfo): void {
+    // 设置 camera 
+    viewport.left =  mapInfo.minX
+    viewport.top =  mapInfo.minY
+    
+    let offset = 100
+    
+    let left = mapInfo.minX  - offset
+    let right = mapInfo.maxX + offset
+    let top = mapInfo.minY   - offset
+    let bottom = mapInfo.maxY + offset
+    
+    // 拖动结束后检测边界
+    viewport.on('drag-end', () => {
+            viewport.clamp({
+                left:  left,
+                top: top,
+                right: right,
+                bottom: bottom,
+            });
+        })
+}
+
 
 function promiseWithIndex<T>(promiseArray: Promise<T>[]): Promise<{ texture: T, index: number }[]> {
     /**
@@ -494,9 +533,6 @@ function renderMapLayerTiles(layerContainer: PIXI.Container,mapLayerTiles: Array
         return
     }
     
-    let positionX = 0
-    let positionY = 0
-
     const tileContainer = layerContainer.addChild(new PIXI.Container());
     tileContainer.sortableChildren = true;
     // 用于后续 index 索引
@@ -518,18 +554,12 @@ function renderMapLayerTiles(layerContainer: PIXI.Container,mapLayerTiles: Array
             const mapTile = mapTileList[index]
 
             spriteObj.position.set(mapTile.x, mapTile.y);
-            positionX = mapTile.x
-            positionY = mapTile.y
-            // log("back ", mapTile.x, mapTile.y)
-            // log("sprit ", spriteRes.originX, spriteRes.originY)
             spriteObj.pivot.set(mapTile.resource.originX, mapTile.resource.originY);
             spriteObj.zIndex = compositeZIndex(mapTile.resource.z, mapTile.id);
         })
-    }).then(() => {
-        viewport.left = positionX
-        viewport.top = positionY
     })
 }
+
 function renderMapLayerLifes(layerContainer: PIXI.Container,mapLayerLifes: Array<WZ.MapLife>|undefined): void {
     if (!mapLayerLifes) {
         return
@@ -657,6 +687,8 @@ function renderMapReactors(mapReactors: Array<WZ.MapReactor>): void {
 async function loadAndRenderMap(mapID: number): Promise<void> {
     const mapInfo = await WZ.loadMapInfo(mapID, baseUrl);
     
+    viewportSetup(mapInfo)
+
     renderMapBacks(mapInfo.backs)
 
     renderMapLayers(mapInfo.layers)
