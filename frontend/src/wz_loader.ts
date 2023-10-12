@@ -118,7 +118,7 @@ export async function loadMapInfo(mapID: number, publicResourceBaseUrl?: string 
 	} else {
 	  console.log("未找到指定的元素");
 	}
-	console.log("4.0");
+	console.log("5.0");
     const resp = await fetch("https://wiki.biligame.com/maplestory/data:mapinfo/"+content+"?action=raw");
 	// const resp = await fetch("http://localhost:9334/map");
     const respBody = await resp.json();

@@ -371,14 +371,14 @@ getCurrentMapPosition()
 
 function viewportSetup(mapInfo: WZ.MapInfo): void {
     // 设置 camera 
-    viewport.left = mapInfo.minX
-    viewport.top = mapInfo.minY
+    viewport.left = 0
+    viewport.top = 0
     let totalX =  mapInfo.maxX - mapInfo.minX
     let totalY = mapInfo.maxY - mapInfo.minY
     let offset = 100
-    let left = 1150
-    let right = 0
-    let top = 0
+    let left = Math.min(mapInfo.minX,-575)
+    let right = 1150
+    let top = Math.min(mapInfo.minY,-384)
     let bottom = 768
     viewport.pause = true
     if (totalX < 1150) {
@@ -387,6 +387,7 @@ function viewportSetup(mapInfo: WZ.MapInfo): void {
         left = mapInfo.minX - offset
         right = mapInfo.maxX + offset
         viewport.pause = false
+        viewport.left = mapInfo.minX
     }
     if (totalY < 768) {
         viewport.y = 384
@@ -394,6 +395,7 @@ function viewportSetup(mapInfo: WZ.MapInfo): void {
         top = mapInfo.minY - offset
         bottom = mapInfo.maxY + offset
         viewport.pause = false
+        viewport.top = mapInfo.minY
     }
     // 拖动结束后检测边界
     viewport.on('drag-end', () => {
