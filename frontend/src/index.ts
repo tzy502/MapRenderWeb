@@ -376,21 +376,24 @@ function viewportSetup(mapInfo: WZ.MapInfo): void {
     let totalX =  mapInfo.maxX - mapInfo.minX
     let totalY = mapInfo.maxY - mapInfo.minY
     let offset = 100
-    let left = 0 - offset
-    let right = 0 + offset
-    let top = 0 - offset
-    let bottom = 0 + offset
+    let left = 1150
+    let right = 0
+    let top = 0
+    let bottom = 768
+    viewport.pause = true
     if (totalX < 1150) {
         viewport.x = 575;
     } else {
         left = mapInfo.minX - offset
         right = mapInfo.maxX + offset
+        viewport.pause = false
     }
     if (totalY < 768) {
         viewport.y = 384
     } else {
         top = mapInfo.minY - offset
         bottom = mapInfo.maxY + offset
+        viewport.pause = false
     }
     // 拖动结束后检测边界
     viewport.on('drag-end', () => {
