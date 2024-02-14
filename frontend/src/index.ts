@@ -371,14 +371,14 @@ getCurrentMapPosition()
 
 function viewportSetup(mapInfo: WZ.MapInfo): void {
     // 设置 camera 
-    viewport.left = 0
-    viewport.top = 0
-    let totalX =  mapInfo.maxX - mapInfo.minX
+    viewport.left = -50
+    viewport.top = -50
+    let totalX = mapInfo.maxX - mapInfo.minX
     let totalY = mapInfo.maxY - mapInfo.minY
     let offset = 100
-    let left = Math.min(mapInfo.minX,-575)
+    let left = Math.min(mapInfo.minX, -575)
     let right = 1150
-    let top = Math.min(mapInfo.minY,-384)
+    let top = Math.min(mapInfo.minY, -384)
     let bottom = 768
     viewport.pause = true
     if (totalX < 1150) {
@@ -423,7 +423,7 @@ function promiseWithIndex<T>(promiseArray: Promise<T>[]): Promise<{ texture: T, 
     )
 }
 
-function renderFrames(frameAni:WZ.FrameAnimate, callBack: (frames: Array<PIXI.FrameObject>)=>void) {
+function renderFrames(frameAni: WZ.FrameAnimate, callBack: (frames: Array<PIXI.FrameObject>) => void) {
     const promiseList = new Array<Promise<PIXI.Texture<PIXI.Resource>>>();
     const frameList = new Array<WZ.Frame>()
     for (let k = 0; k < frameAni.frames.length; k++) {
@@ -447,7 +447,7 @@ function renderFrames(frameAni:WZ.FrameAnimate, callBack: (frames: Array<PIXI.Fr
             })
             return frames;
         })
-        .then((frames)=>{
+        .then((frames) => {
             callBack(frames)
         })
 }
@@ -456,7 +456,7 @@ function renderMapBacks(mapBacks: Array<WZ.MapBack>): void {
     if (!mapBacks) {
         return
     }
-    
+
     const backLayer = viewport.addChild(new PIXI.Container());
     backLayer.sortableChildren = true;
     backLayer.zIndex = 0;
@@ -471,12 +471,12 @@ function renderMapBacks(mapBacks: Array<WZ.MapBack>): void {
         if (mapBack.resource) {
             switch (mapBack.ani) {
                 case 0: {
-                        // sprite
-                        const spriteRes = <WZ.Sprite>mapBack.resource;
-                        const spriteImageUrl = new URL(spriteRes.resourceUrl, baseUrl).toString();
-                        
-                        PIXI.Assets.load<PIXI.Texture>(spriteImageUrl)
-                        .then((res)=> {
+                    // sprite
+                    const spriteRes = <WZ.Sprite>mapBack.resource;
+                    const spriteImageUrl = new URL(spriteRes.resourceUrl, baseUrl).toString();
+
+                    PIXI.Assets.load<PIXI.Texture>(spriteImageUrl)
+                        .then((res) => {
                             const spriteObj = new MaplestorySprite(res);
                             spriteObj.position.set(mapBack.x, mapBack.y);
                             spriteObj.pivot.set(spriteRes.originX, spriteRes.originY);
@@ -485,50 +485,50 @@ function renderMapBacks(mapBacks: Array<WZ.MapBack>): void {
                             }
                             const backObj = rootLayer.addChild(new MaplestoryTilingSprite(viewport, mapBack, spriteObj));
                             backObj.alpha = mapBack.alpha / 255.0;
-                            backObj.zIndex = mapBack.id+1;
+                            backObj.zIndex = mapBack.id + 1;
                             backObj.autoUpdate = true;
                         })
-                    }
+                }
                     break;
                 case 1: {
-                        // frameAni
-                        const frameAni = <WZ.FrameAnimate>mapBack.resource;
-                        
-                        renderFrames(frameAni, (frames)=>{
-                            const aniObj = new MaplestoryAnimatedSprite(frames, false);
-                            aniObj.rawFrames = frameAni.frames;
-                            aniObj.position.set(mapBack.x, mapBack.y);
-                            if (mapBack.flipX) {
-                                aniObj.scale.x = -1;
-                            }
-                            aniObj.loop = true;
-                            aniObj.play();
-                            const backObj = rootLayer.addChild(new MaplestoryTilingSprite(viewport, mapBack, aniObj));
-                            backObj.alpha = mapBack.alpha / 255.0;
-                            backObj.zIndex = mapBack.id+1;
-                            backObj.autoUpdate = true;
-                        })
-                    }
+                    // frameAni
+                    const frameAni = <WZ.FrameAnimate>mapBack.resource;
+
+                    renderFrames(frameAni, (frames) => {
+                        const aniObj = new MaplestoryAnimatedSprite(frames, false);
+                        aniObj.rawFrames = frameAni.frames;
+                        aniObj.position.set(mapBack.x, mapBack.y);
+                        if (mapBack.flipX) {
+                            aniObj.scale.x = -1;
+                        }
+                        aniObj.loop = true;
+                        aniObj.play();
+                        const backObj = rootLayer.addChild(new MaplestoryTilingSprite(viewport, mapBack, aniObj));
+                        backObj.alpha = mapBack.alpha / 255.0;
+                        backObj.zIndex = mapBack.id + 1;
+                        backObj.autoUpdate = true;
+                    })
+                }
                     break;
                 case 2: // Spine
             }
         }
     }
-    
+
 }
 
-function renderMapLayerObjs(layerContainer: PIXI.Container,mapLayerObjs: Array<WZ.MapObj>|undefined): void {
+function renderMapLayerObjs(layerContainer: PIXI.Container, mapLayerObjs: Array<WZ.MapObj> | undefined): void {
     if (!mapLayerObjs) {
         return
     }
-    
+
     const objContainer = layerContainer.addChild(new PIXI.Container());
     objContainer.sortableChildren = true;
     for (let j = 0; j < mapLayerObjs.length; j++) {
         const mapObj = mapLayerObjs[j]
         const frameAni = mapObj.resource
         if (frameAni && frameAni.frames) {
-            renderFrames(frameAni, (frames)=>{
+            renderFrames(frameAni, (frames) => {
                 const aniObj = objContainer.addChild(new MaplestoryAnimatedSprite(frames));
                 aniObj.rawFrames = frameAni.frames;
                 aniObj.position.set(mapObj.x, mapObj.y);
@@ -539,16 +539,16 @@ function renderMapLayerObjs(layerContainer: PIXI.Container,mapLayerObjs: Array<W
                 aniObj.loop = true;
                 aniObj.play();
             })
-            
+
         }
     }
 }
 
-function renderMapLayerTiles(layerContainer: PIXI.Container,mapLayerTiles: Array<WZ.MapTile>|undefined): void {
+function renderMapLayerTiles(layerContainer: PIXI.Container, mapLayerTiles: Array<WZ.MapTile> | undefined): void {
     if (!mapLayerTiles) {
         return
     }
-    
+
     const tileContainer = layerContainer.addChild(new PIXI.Container());
     tileContainer.sortableChildren = true;
     // 用于后续 index 索引
@@ -563,7 +563,7 @@ function renderMapLayerTiles(layerContainer: PIXI.Container,mapLayerTiles: Array
             mapTileList.push(mapLayerTiles[j])
         }
     }
-    
+
     promiseWithIndex(promiseList).then(results => {
         results.forEach(({ texture, index }) => {
             const spriteObj = tileContainer.addChild(new PIXI.Sprite(texture));
@@ -576,17 +576,17 @@ function renderMapLayerTiles(layerContainer: PIXI.Container,mapLayerTiles: Array
     })
 }
 
-function renderMapLayerLifes(layerContainer: PIXI.Container,mapLayerLifes: Array<WZ.MapLife>|undefined): void {
+function renderMapLayerLifes(layerContainer: PIXI.Container, mapLayerLifes: Array<WZ.MapLife> | undefined): void {
     if (!mapLayerLifes) {
         return
     }
-    
+
     const lifeContainer = layerContainer.addChild(new PIXI.Container());
     lifeContainer.sortableChildren = true;
     for (let j = 0; j < mapLayerLifes.length; j++) {
         const maplife = mapLayerLifes[j];
         const frameAni = maplife.resource;
-        
+
         if (frameAni && frameAni.frames) {
             renderFrames(frameAni, (frames) => {
                 const aniObj = lifeContainer.addChild(new MaplestoryAnimatedSprite(frames));
@@ -596,7 +596,7 @@ function renderMapLayerLifes(layerContainer: PIXI.Container,mapLayerLifes: Array
                 if (maplife.flipX) {
                     aniObj.scale.x = -1;
                 }
-                
+
                 aniObj.loop = true;
 
                 let frontColor = '0xFFFF00';
@@ -646,9 +646,9 @@ function renderMapLayers(mapLayers: Array<WZ.MapLayer>): void {
         layerContainer.zIndex = i + 1;
 
         renderMapLayerObjs(layerContainer, mapLayer.objs)
-    
+
         renderMapLayerTiles(layerContainer, mapLayer.tiles)
-        
+
         renderMapLayerLifes(layerContainer, mapLayer.lifes)
     }
 }
@@ -657,15 +657,15 @@ function renderMapPortals(mapPortals: Array<WZ.MapPortal>): void {
     if (!mapPortals) {
         return
     }
-    
+
     const portalContainer = viewport.addChild(new PIXI.Container());
     portalContainer.sortableChildren = true;
-    portalContainer.zIndex=99;
+    portalContainer.zIndex = 99;
     for (let j = 0; j < mapPortals.length; j++) {
         const mapportal = mapPortals[j];
         const frameAni = mapportal.resource;
         if (frameAni && frameAni.frames) {
-            renderFrames(frameAni, (frames)=> {
+            renderFrames(frameAni, (frames) => {
                 const aniObj = portalContainer.addChild(new MaplestoryAnimatedSprite(frames));
                 aniObj.rawFrames = frameAni.frames;
                 aniObj.position.set(mapportal.x, mapportal.y);
@@ -680,16 +680,16 @@ function renderMapReactors(mapReactors: Array<WZ.MapReactor>): void {
     if (!mapReactors) {
         return
     }
-    
+
     const portalContainer = viewport.addChild(new PIXI.Container());
     portalContainer.sortableChildren = true;
-    portalContainer.zIndex= 99;
+    portalContainer.zIndex = 99;
 
     for (let j = 0; j < mapReactors.length; j++) {
         const mapReactor = mapReactors[j];
         const frameAni = mapReactor.resource;
         if (frameAni && frameAni.frames) {
-            renderFrames(frameAni, (frames)=>{
+            renderFrames(frameAni, (frames) => {
                 const aniObj = portalContainer.addChild(new MaplestoryAnimatedSprite(frames));
                 aniObj.rawFrames = frameAni.frames;
                 aniObj.position.set(mapReactor.x, mapReactor.y);
@@ -702,7 +702,7 @@ function renderMapReactors(mapReactors: Array<WZ.MapReactor>): void {
 
 async function loadAndRenderMap(mapID: number): Promise<void> {
     const mapInfo = await WZ.loadMapInfo(mapID, baseUrl);
-    
+
     viewportSetup(mapInfo)
 
     renderMapBacks(mapInfo.backs)
@@ -710,7 +710,7 @@ async function loadAndRenderMap(mapID: number): Promise<void> {
     renderMapLayers(mapInfo.layers)
 
     renderMapPortals(mapInfo.mapPortals)
-    
+
     renderMapReactors(mapInfo.mapReactors)
 }
 

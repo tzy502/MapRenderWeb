@@ -45,11 +45,36 @@ export interface FrameAnimate
 	frames: Array<Frame>
 }
 
-export async function loadMapInfo(mapID: number, publicResourceBaseUrl?: string | URL | undefined) : Promise<MapleLife> {
+export async function loadMapInfo(string: number, publicResourceBaseUrl?: string | URL | undefined) : Promise<MapleLife> {
     // const url = new URL(`Map/Map/Map${Math.floor(mapID/100000000)}/${mapID}.json`, publicResourceBaseUrl);
 	console.log("loadMapInfo")
-    // const resp = await fetch("https://wiki.biligame.com/maplestory/100000000/mapinfo?action=raw");
-	const resp = await fetch("http://localhost:9334/mob");
+	const divElement = document.getElementById("code");
+	let content="";
+	if (divElement) {
+	  // 获取文本内容
+	  if(divElement.textContent){
+		content = divElement.textContent;
+	  }
+	  
+	  console.log(content); 
+	} else {
+	  console.log("未找到指定的元素");
+	}
+
+	let type="";
+	const typeElement = document.getElementById("type");
+	if (typeElement) {
+	  // 获取文本内容
+	  if(typeElement.textContent){
+		type = typeElement.textContent;
+	  }
+	  
+	  console.log(type); 
+	} else {
+	  console.log("未找到指定的元素");
+	}
+    const resp = await fetch("https://wiki.biligame.com/maplestory/data:"+type+"PixiInfo/"+content+"?action=raw");
+	// const resp = await fetch("http://localhost:9334/mob");
     const respBody = await resp.json();
     return respBody as MapleLife;
 }

@@ -182,6 +182,9 @@ function compositeZIndex(z0: number, z1?: number, z2?: number): number {
 
 async function loadAndRenderMap(mapID: number): Promise<void> {
     const mapleLife = await WZ.loadMapInfo(mapID, baseUrl);
+    if(!mapleLife.lifes){
+        console.log
+    }
     if (mapleLife.lifes) {
         let width = 1150;
         let height = 768;
@@ -320,6 +323,18 @@ PIXI.Ticker.shared.autoStart = false;
 loadAndRenderMap(mapID).then(mapInfo => {
     console.log("success");
     PIXI.Ticker.shared.start();
+    console.log("success11");
 }).catch(e => {
     console.error(e);
+    console.log("地图加载出错")
+    const mapElement = document.getElementById("map");
+    if (mapElement) {
+        mapElement.remove();
+    }
+    // 修改 <div> 元素的内容
+    const noticeElement = document.getElementById("notice");
+    if (noticeElement) {
+        noticeElement.innerHTML = "此地图无法模拟或者模拟错误<br/>如非莫奈德系列地图请联系 龙胶水";
+        noticeElement.style.display = "block";
+    }
 }); 
