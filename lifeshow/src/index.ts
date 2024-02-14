@@ -180,6 +180,51 @@ function compositeZIndex(z0: number, z1?: number, z2?: number): number {
         + normalize(z2);
 }
 
+
+function promiseWithIndex<T>(promiseArray: Promise<T>[]): Promise<{ texture: T, index: number }[]> {
+    /**
+     * 由于网络不保证顺序性
+     * 根据 element 在 array 的顺序
+     * 返回结果 {texture: texture, index:index}
+     */
+
+    return Promise.all(
+        promiseArray.map((promiseObj, index) =>
+            promiseObj.then(texture => ({ texture, index }))
+        )
+    )
+}
+
+function renderFrames(frameAni: WZ.FrameAnimate, callBack: (frames: Array<PIXI.FrameObject>) => void) {
+    const promiseList = new Array<Promise<PIXI.Texture<PIXI.Resource>>>();
+    const frameList = new Array<WZ.Frame>()
+    for (let k = 0; k < frameAni.frames.length; k++) {
+        const frame = frameAni.frames[k];
+        const spriteImageUrl = new URL(frame.resourceUrl, baseUrl).toString();
+        const texture = PIXI.Assets.load<PIXI.Texture>(spriteImageUrl);
+        promiseList.push(texture)
+        frameList.push(frame)
+    }
+
+    promiseWithIndex(promiseList)
+        .then(results => {
+            const frames = new Array<PIXI.FrameObject>();
+            results.forEach(({ texture, index }) => {
+                // todo: may be error
+                // js feature
+                // a = []
+                // a[2] = 1
+                // ==> [empty X 2, 1]
+                frames[index] = { texture: texture, time: frameList[index].delay }
+            })
+            return frames;
+        })
+        .then((frames) => {
+            callBack(frames)
+        })
+}
+
+
 async function loadAndRenderMap(mapID: number): Promise<void> {
     const mapleLife = await WZ.loadMapInfo(mapID, baseUrl);
     if(!mapleLife.lifes){
@@ -240,70 +285,65 @@ async function loadAndRenderMap(mapID: number): Promise<void> {
             const maplife = mapleLife.lifes[j];
             const frameAni = maplife.resource;
             if (frameAni && frameAni.frames) {
+                renderFrames(frameAni, (frames) => {
 
-                const frames = new Array<PIXI.FrameObject>();
-                for (let k = 0; k < frameAni.frames.length; k++) {
-                    const frame = frameAni.frames[k];
-                    const spriteImageUrl = new URL(frame.resourceUrl, baseUrl).toString();
-                    const texture = await PIXI.Assets.load<PIXI.Texture>(spriteImageUrl);
-                    frames.push({ texture: texture, time: frame.delay });
-                }
-                const aniObj = lifeContainer.addChild(new MaplestoryAnimatedSprite(frames));
-                aniObj.rawFrames = frameAni.frames;
-                aniObj.position.set(maplife.x, maplife.y);
-                aniObj.zIndex = compositeZIndex(maplife.z, maplife.id);
-                if (maplife.flipX) {
-                    aniObj.scale.x = -1;
-                }
-                aniObj.loop = true;
+                    const aniObj = lifeContainer.addChild(new MaplestoryAnimatedSprite(frames));
+                    aniObj.rawFrames = frameAni.frames;
+                    aniObj.position.set(maplife.x, maplife.y);
+                    aniObj.zIndex = compositeZIndex(maplife.z, maplife.id);
+                    if (maplife.flipX) {
+                        aniObj.scale.x = -1;
+                    }
+                    aniObj.loop = true;
 
-                var frontColor = '0xFFFFFF';
+                    var frontColor = '0xFFFFFF';
 
-                console.log(maplife.lifeName)
-                if (maplife.lifeName) {
-                    const fontSize = 12;
+                    console.log(maplife.lifeName)
+                    if (maplife.lifeName) {
+                        const fontSize = 12;
 
-                    const namePlateContainer = new PIXI.Container();
+                        const namePlateContainer = new PIXI.Container();
 
-                    namePlateContainer.position.set(maplife.x, maplife.y + 2); // 设置姓名牌容器的位置为动画对象底部
-                    lifeContainer.addChild(namePlateContainer);
-                    //要先生成名字才知道宽度
-                    const nameText1 = new PIXI.Text(maplife.lifeName, { fontFamily: "SimSun", fontSize: fontSize, fill: frontColor, textBaseline: 'alphabetic', lineHeight: fontSize + 1 });
-
-                    //画背景
-                    const nameText1Background = new PIXI.Graphics();
-                    nameText1Background.position.set(0, 2);
-                    nameText1Background.beginFill(0xff000000, 0.65);
-                    nameText1Background.drawRoundedRect(-nameText1.width / 2 - 5, 0, nameText1.width + 10, nameText1.height + 5, 3); // 调整背景尺寸和位置
-                    nameText1Background.endFill();
-                    namePlateContainer.addChild(nameText1Background); // 将背景放在容器的底部
-                    //画名字
-                    // nameText1.anchor.set(5,2); // 要回调回去 
-                    nameText1.position.set(-nameText1.width / 2, 2);
-                    nameText1.texture.baseTexture.scaleMode = PIXI.SCALE_MODES.NEAREST;
-                    nameText1Background.addChild(nameText1);
-
-
-                    if (maplife.lifeFunc) {
-
+                        namePlateContainer.position.set(maplife.x, maplife.y + 2); // 设置姓名牌容器的位置为动画对象底部
+                        lifeContainer.addChild(namePlateContainer);
                         //要先生成名字才知道宽度
-                        const nameText2 = new PIXI.Text(maplife.lifeFunc, { fontFamily: "SimSun", fontSize: fontSize, fill: frontColor, textBaseline: 'alphabetic', lineHeight: fontSize + 1 });
+                        const nameText1 = new PIXI.Text(maplife.lifeName, { fontFamily: "SimSun", fontSize: fontSize, fill: frontColor, textBaseline: 'alphabetic', lineHeight: fontSize + 1 });
 
                         //画背景
-                        const nameText2Background = new PIXI.Graphics();
-                        nameText2Background.position.set(0, 2 + 3 + nameText1Background.height);
-                        nameText2Background.beginFill(0xff000000, 0.65);
-                        nameText2Background.drawRoundedRect(-nameText2.width / 2 - 5, 0, nameText2.width + 10, nameText2.height + 5, 3); // 调整背景尺寸和位置
-                        nameText2Background.endFill();
-                        namePlateContainer.addChild(nameText2Background); // 将背景放在容器的底部
+                        const nameText1Background = new PIXI.Graphics();
+                        nameText1Background.position.set(0, 2);
+                        nameText1Background.beginFill(0xff000000, 0.65);
+                        nameText1Background.drawRoundedRect(-nameText1.width / 2 - 5, 0, nameText1.width + 10, nameText1.height + 5, 3); // 调整背景尺寸和位置
+                        nameText1Background.endFill();
+                        namePlateContainer.addChild(nameText1Background); // 将背景放在容器的底部
                         //画名字
                         // nameText1.anchor.set(5,2); // 要回调回去 
-                        nameText2.position.set(-nameText2.width / 2, 2);
-                        nameText2.texture.baseTexture.scaleMode = PIXI.SCALE_MODES.NEAREST;
-                        nameText2Background.addChild(nameText2);
+                        nameText1.position.set(-nameText1.width / 2, 2);
+                        nameText1.texture.baseTexture.scaleMode = PIXI.SCALE_MODES.NEAREST;
+                        nameText1Background.addChild(nameText1);
+
+
+                        if (maplife.lifeFunc) {
+
+                            //要先生成名字才知道宽度
+                            const nameText2 = new PIXI.Text(maplife.lifeFunc, { fontFamily: "SimSun", fontSize: fontSize, fill: frontColor, textBaseline: 'alphabetic', lineHeight: fontSize + 1 });
+
+                            //画背景
+                            const nameText2Background = new PIXI.Graphics();
+                            nameText2Background.position.set(0, 2 + 3 + nameText1Background.height);
+                            nameText2Background.beginFill(0xff000000, 0.65);
+                            nameText2Background.drawRoundedRect(-nameText2.width / 2 - 5, 0, nameText2.width + 10, nameText2.height + 5, 3); // 调整背景尺寸和位置
+                            nameText2Background.endFill();
+                            namePlateContainer.addChild(nameText2Background); // 将背景放在容器的底部
+                            //画名字
+                            // nameText1.anchor.set(5,2); // 要回调回去 
+                            nameText2.position.set(-nameText2.width / 2, 2);
+                            nameText2.texture.baseTexture.scaleMode = PIXI.SCALE_MODES.NEAREST;
+                            nameText2Background.addChild(nameText2);
+                        }
                     }
-                }
-                aniObj.play();
+                    aniObj.play();
+                })
             }
         }
 
